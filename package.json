@@ -1,0 +1,40 @@
+{
+  "name": "internshalla",
+  "version": "1.0.0",
+  "description": "Production-oriented architecture for AlphaHunter, an AI-assisted trading intelligence platform for Indian markets.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "dependencies": {
+    "baseline-browser-mapping": "^2.11.8",
+    "browserslist": "^4.28.7",
+    "caniuse-lite": "^1.0.30001806",
+    "convert-source-map": "^2.0.0",
+    "electron-to-chromium": "^1.5.399",
+    "empathic": "^2.0.1",
+    "escalade": "^3.2.0",
+    "gensync": "^1.0.0-beta.2",
+    "import-meta-resolve": "^4.2.0",
+    "js-tokens": "^10.0.0",
+    "jsesc": "^3.1.0",
+    "json5": "^2.2.3",
+    "lru-cache": "^11.5.2",
+    "node-releases": "^2.0.51",
+    "obug": "^2.1.4",
+    "picocolors": "^1.1.1",
+    "semver": "^7.8.5",
+    "update-browserslist-db": "^1.2.3"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.4"
+  },
+  "scripts": {
+    "desktop-build": "powershell -ExecutionPolicy Bypass -File scripts/build_backend.ps1 && npx tauri build",
+    "desktop-dev": "powershell -ExecutionPolicy Bypass -File scripts/build_backend.ps1 && npx tauri dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

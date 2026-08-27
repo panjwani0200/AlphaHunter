@@ -1,0 +1,2067 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+  <title>Chart Terminal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0d12;
+      --panel: #0e1218;
+      --panel-2: #11151c;
+      --border: #1d232c;
+      --border-soft: #161b22;
+      --text: #e7ebf1;
+      --text-dim: #7c8698;
+      --text-faint: #4a525f;
+      --bull: #2fd480;
+      --bull-dim: #1c8657;
+      --bear: #ff4d5e;
+      --bear-dim: #a5313c;
+      --accent: #5b8cff;
+      --accent-dim: #2b3f77;
+      --grid: #151a21;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'Inter', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      overflow: hidden;
+    }
+
+    ::selection {
+      background: var(--accent-dim);
+    }
+
+    button {
+      font-family: var(--sans);
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ---------- Top bar ---------- */
+    #topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 48px;
+      min-height: 48px;
+      padding: 0 12px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      z-index: 40;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      letter-spacing: .3px;
+      color: var(--text);
+      margin-right: 4px;
+    }
+
+    .brand .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .brand span.sub {
+      font-size: 10px;
+      color: var(--text-faint);
+      font-weight: 500;
+      letter-spacing: 1px;
+    }
+
+    .divider {
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+      margin: 0 4px;
+    }
+
+    .symbol-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .symbol-btn:hover {
+      border-color: var(--accent-dim);
+    }
+
+    .symbol-btn .px {
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 12px;
+    }
+
+    .symbol-btn .px.up {
+      color: var(--bull);
+    }
+
+    .symbol-btn .px.down {
+      color: var(--bear);
+    }
+
+    .caret {
+      width: 8px;
+      height: 8px;
+      border-right: 1.5px solid var(--text-dim);
+      border-bottom: 1.5px solid var(--text-dim);
+      transform: rotate(45deg);
+      margin-top: -3px;
+    }
+
+    .tf-group {
+      display: flex;
+      align-items: center;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px;
+    }
+
+    .tf-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-dim);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 9px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: var(--mono);
+    }
+
+    .tf-btn:hover {
+      color: var(--text);
+    }
+
+    .tf-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .tool-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .tool-btn:hover {
+      color: var(--text);
+      border-color: var(--accent-dim);
+    }
+
+    .tool-btn.active {
+      color: var(--accent);
+      border-color: var(--accent-dim);
+      background: rgba(91, 140, 255, .08);
+    }
+
+    #topbar-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-dim);
+      cursor: pointer;
+    }
+
+    .icon-btn:hover {
+      color: var(--text);
+      border-color: var(--accent-dim);
+    }
+
+    .icon-btn svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    /* ---------- Body layout ---------- */
+    #body {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+      position: relative;
+    }
+
+    /* Left drawing toolbar */
+    #left-toolbar {
+      width: 46px;
+      min-width: 46px;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 0;
+      gap: 2px;
+      z-index: 30;
+      overflow-y: auto;
+    }
+
+    .lt-btn {
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 7px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-dim);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .lt-btn svg {
+      width: 17px;
+      height: 17px;
+      pointer-events: none;
+    }
+
+    .lt-btn:hover {
+      background: var(--panel-2);
+      color: var(--text);
+    }
+
+    .lt-btn.active {
+      background: rgba(91, 140, 255, .12);
+      color: var(--accent);
+      border-color: var(--accent-dim);
+    }
+
+    .lt-sep {
+      width: 26px;
+      height: 1px;
+      background: var(--border);
+      margin: 6px 0;
+    }
+
+    .lt-btn .tip {
+      position: absolute;
+      left: 42px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #1a2029;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 5px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .1s;
+      z-index: 100;
+      font-family: var(--sans);
+      font-weight: 500;
+    }
+
+    .lt-btn:hover .tip {
+      opacity: 1;
+    }
+
+    /* Chart area */
+    #chart-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      position: relative;
+    }
+
+    #panes {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      position: relative;
+    }
+
+    .pane-wrap {
+      position: relative;
+      border-bottom: 1px solid var(--border-soft);
+      flex-shrink: 0;
+    }
+
+    .pane-wrap canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .pane-label {
+      position: absolute;
+      top: 6px;
+      left: 8px;
+      z-index: 5;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      pointer-events: none;
+      font-family: var(--mono);
+    }
+
+    .pane-label .item {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      background: rgba(14, 18, 24, .55);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .pane-label .item .swatch {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+    }
+
+    .pane-label .item .rm {
+      cursor: pointer;
+      color: var(--text-faint);
+      font-weight: 700;
+      padding: 0 2px;
+    }
+
+    .pane-label .item .rm:hover {
+      color: var(--bear);
+    }
+
+    .pane-label .item .val {
+      color: var(--text-dim);
+    }
+
+    #main-pane {
+      flex: 1 1 auto;
+      min-height: 120px;
+    }
+
+    .sub-pane {
+      height: 110px;
+    }
+
+    #time-axis-wrap {
+      height: 26px;
+      flex-shrink: 0;
+      position: relative;
+      background: var(--panel);
+      border-top: 1px solid var(--border-soft);
+    }
+
+    #time-axis-wrap canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    #crosshair-readout {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      z-index: 6;
+      background: rgba(14, 18, 24, .7);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 4px 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      display: none;
+      line-height: 1.5;
+    }
+
+    #crosshair-readout b {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    #crosshair-readout .g {
+      color: var(--bull);
+    }
+
+    #crosshair-readout .r {
+      color: var(--bear);
+    }
+
+    #watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 52px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, .025);
+      letter-spacing: 2px;
+      pointer-events: none;
+      user-select: none;
+      z-index: 0;
+      font-family: var(--sans);
+    }
+
+    /* Dropdown panels */
+    .dropdown {
+      position: absolute;
+      top: 52px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, .5);
+      z-index: 60;
+      display: none;
+      overflow: hidden;
+    }
+
+    .dropdown.open {
+      display: block;
+    }
+
+    .dd-title {
+      padding: 10px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dd-item {
+      padding: 9px 12px;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .dd-item:hover {
+      background: var(--panel);
+    }
+
+    .dd-item .meta {
+      color: var(--text-faint);
+      font-size: 11px;
+      font-family: var(--mono);
+    }
+
+    .dd-sep {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    #symbol-dd {
+      left: 108px;
+      width: 250px;
+      max-height: 340px;
+      overflow-y: auto;
+    }
+
+    #symbol-search {
+      width: 100%;
+      padding: 9px 12px;
+      background: var(--panel);
+      border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+
+    #symbol-dd .dd-item .name {
+      font-weight: 600;
+    }
+
+    #symbol-dd .dd-item .full {
+      color: var(--text-faint);
+      font-size: 11px;
+      margin-left: 6px;
+      font-weight: 400;
+    }
+
+    #type-dd {
+      width: 190px;
+    }
+
+    #ind-dd {
+      width: 270px;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+
+    .ind-cat {
+      padding: 8px 12px 4px;
+      font-size: 10px;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      font-weight: 700;
+    }
+
+    .ind-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      font-size: 12.5px;
+    }
+
+    .ind-row .name {
+      color: var(--text);
+    }
+
+    .ind-row .desc {
+      color: var(--text-faint);
+      font-size: 10.5px;
+      display: block;
+      margin-top: 1px;
+    }
+
+    .add-btn {
+      background: var(--accent-dim);
+      color: #bcd0ff;
+      border: none;
+      border-radius: 5px;
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .add-btn:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .add-btn:disabled {
+      opacity: .35;
+      cursor: default;
+    }
+
+    /* toast */
+    #toast {
+      position: absolute;
+      bottom: 34px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: #181f2a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 7px;
+      font-size: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all .18s;
+      z-index: 80;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #ctx-hint {
+      position: absolute;
+      bottom: 8px;
+      left: 56px;
+      font-size: 11px;
+      color: var(--text-faint);
+      font-family: var(--mono);
+      background: rgba(14, 18, 24, .6);
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: none;
+      z-index: 6;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #242b36;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    body.light {
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --panel-2: #f0f1f4;
+      --border: #e2e5ea;
+      --border-soft: #eceef2;
+      --text: #12151a;
+      --text-dim: #5b6472;
+      --text-faint: #9aa2b0;
+      --grid: #eef0f3;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+
+    <!-- TOP BAR -->
+    <div id="topbar">
+      <div class="brand"><span class="dot"></span>Chart Terminal<span class="sub"
+          style="margin-left:6px;">TERMINAL</span></div>
+      <div class="divider"></div>
+
+      <button class="symbol-btn" id="symbolBtn">
+        <span id="symbolLabel">BTCUSD</span>
+        <span class="px up" id="symbolPx">67,420.50</span>
+        <span class="caret"></span>
+      </button>
+
+      <div class="tf-group" id="tfGroup"></div>
+
+      <button class="tool-btn" id="typeBtn">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4">
+          <rect x="2" y="6" width="2" height="6" />
+          <rect x="7" y="2" width="2" height="10" />
+          <rect x="12" y="8" width="2" height="4" />
+        </svg>
+        <span id="typeLabel">Candles</span>
+        <span class="caret"></span>
+      </button>
+
+      <button class="tool-btn" id="indBtn">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4">
+          <path d="M2 13 L6 7 L9 10 L14 3" />
+        </svg>
+        Indicators
+      </button>
+
+      <div id="topbar-right">
+        <div class="icon-btn" id="themeBtn" title="Toggle theme">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z" />
+          </svg>
+        </div>
+        <div class="icon-btn" id="resetBtn" title="Reset view">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M3 12a9 9 0 1 1 3 6.7" />
+            <path d="M3 21v-6h6" />
+          </svg>
+        </div>
+        <div class="icon-btn" id="screenshotBtn" title="Screenshot">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M4 8h3l2-2h6l2 2h3v11H4z" />
+            <circle cx="12" cy="13.5" r="3.2" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <div id="body">
+
+      <!-- LEFT DRAWING TOOLBAR -->
+      <div id="left-toolbar"></div>
+
+      <!-- CHART AREA -->
+      <div id="chart-area">
+        <div id="panes">
+          <div id="watermark">BTCUSD</div>
+          <div id="crosshair-readout"></div>
+          <div id="ctx-hint">Esc cancel · Del remove selected · Drag to draw</div>
+        </div>
+        <div id="time-axis-wrap"><canvas id="timeAxisCanvas"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Symbol dropdown -->
+  <div class="dropdown" id="symbol-dd">
+    <input id="symbol-search" placeholder="Search symbol...">
+    <div id="symbol-list"></div>
+  </div>
+
+  <!-- Chart type dropdown -->
+  <div class="dropdown" id="type-dd"></div>
+
+  <!-- Indicators dropdown -->
+  <div class="dropdown" id="ind-dd"></div>
+
+  <div id="toast"></div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      /* =====================================================================
+         UTIL
+      ===================================================================== */
+      const $ = (s, r) => (r || document).querySelector(s);
+      const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+      const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+      const fmtPrice = (v, dec) => v == null || isNaN(v) ? '-' : v.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec });
+      function toast(msg) {
+        const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+        clearTimeout(toast._h); toast._h = setTimeout(() => t.classList.remove('show'), 1600);
+      }
+
+      /* =====================================================================
+         SYMBOLS + SYNTHETIC DATA
+      ===================================================================== */
+      const SYMBOLS = [
+        { sym: 'NIFTY', name: 'Nifty 50 Index', base: 24500, vol: 0.01, dec: 2 },
+        { sym: 'BANKNIFTY', name: 'Nifty Bank Index', base: 52000, vol: 0.015, dec: 2 },
+        { sym: 'RELIANCE', name: 'Reliance Industries', base: 3100, vol: 0.015, dec: 2 },
+        { sym: 'HDFCBANK', name: 'HDFC Bank Ltd.', base: 1650, vol: 0.012, dec: 2 },
+        { sym: 'TCS', name: 'Tata Consultancy Services', base: 3900, vol: 0.011, dec: 2 },
+        { sym: 'INFY', name: 'Infosys Ltd.', base: 1500, vol: 0.013, dec: 2 },
+        { sym: 'ICICIBANK', name: 'ICICI Bank Ltd.', base: 1150, vol: 0.014, dec: 2 },
+        { sym: 'SBI', name: 'State Bank of India', base: 850, vol: 0.018, dec: 2 },
+        { sym: 'ETERNAL', name: 'Eternal Ltd.', base: 180, vol: 0.025, dec: 2 },
+        { sym: 'HAL', name: 'Hindustan Aeronautics Ltd.', base: 4500, vol: 0.02, dec: 2 }
+      ];
+
+      const TIMEFRAMES = [
+        { id: '1m', label: '1m', ms: 60 * 1000, count: 600 },
+        { id: '5m', label: '5m', ms: 5 * 60 * 1000, count: 600 },
+        { id: '15m', label: '15m', ms: 15 * 60 * 1000, count: 600 },
+        { id: '1h', label: '1H', ms: 60 * 60 * 1000, count: 600 },
+        { id: '4h', label: '4H', ms: 4 * 60 * 60 * 1000, count: 500 },
+        { id: '1D', label: '1D', ms: 24 * 60 * 60 * 1000, count: 500 },
+        { id: '1W', label: '1W', ms: 7 * 24 * 60 * 60 * 1000, count: 300 },
+      ];
+
+      // deterministic PRNG so a given symbol/timeframe always looks the same
+      function mulberry32(a) {
+        return function () {
+          a |= 0; a = (a + 0x6D2B79F5) | 0;
+          let t = Math.imul(a ^ (a >>> 15), 1 | a);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) { h = (Math.imul(31, h) + s.charCodeAt(i)) | 0; } return h; }
+
+      function genSeries(symbolInfo, tf) {
+        const rand = mulberry32(hashStr(symbolInfo.sym + tf.id) ^ 0x9e3779b9);
+        const n = tf.count;
+        const out = new Array(n);
+        let price = symbolInfo.base * (0.85 + rand() * 0.3);
+        const now = Date.now();
+        // align last candle to timeframe boundary
+        const lastTime = Math.floor(now / tf.ms) * tf.ms;
+        let trend = 0;
+        for (let i = 0; i < n; i++) {
+          const t = lastTime - (n - 1 - i) * tf.ms;
+          // gentle regime-based drift
+          if (i % 40 === 0) trend = (rand() - 0.5) * symbolInfo.vol * 0.6;
+          const drift = trend * price;
+          const shock = (rand() - 0.5) * 2 * symbolInfo.vol * price;
+          const open = price;
+          let close = open + drift + shock;
+          if (close <= 0) close = open * 0.98;
+          const hi = Math.max(open, close) + rand() * symbolInfo.vol * price * 0.6;
+          const lo = Math.min(open, close) - rand() * symbolInfo.vol * price * 0.6;
+          const volBase = (0.4 + rand() * 1.2) * (symbolInfo.base) * 1200;
+          const volume = Math.round(volBase * (1 + Math.abs(shock / price) * 8));
+          out[i] = { t, o: open, h: hi, l: Math.max(lo, 0.0001), c: close, v: volume };
+          price = close;
+        }
+        return out;
+      }
+
+      const dataCache = {}; // key: sym|tf -> array
+      let currentFetchController = null;
+
+      async function fetchRealData(sym, tfId) {
+        const key = sym + '|' + tfId;
+        if (dataCache[key]) return dataCache[key]; // Return from cache
+
+        // Abort previous fetch if switching rapidly
+        if (currentFetchController) currentFetchController.abort();
+        currentFetchController = new AbortController();
+
+        try {
+          let url = '';
+          const isIntraday = ['1m', '5m', '15m', '1h'].includes(tfId);
+          if (isIntraday) {
+            url = `/api/market/intraday?symbol=${encodeURIComponent(sym)}&interval=${tfId}`;
+          } else {
+            url = `/api/market/historical?symbol=${encodeURIComponent(sym)}&interval=${tfId}&period=6mo`;
+          }
+
+          const res = await fetch(url, { signal: currentFetchController.signal });
+          const data = await res.json();
+
+          // Convert API format to chart format
+          // API returns: { trade_date/observed_at, open, high, low, close, volume } or similar
+          const out = [];
+          if (Array.isArray(data)) {
+            data.forEach(d => {
+              const timeStr = d.observed_at || d.trade_date;
+              if (!timeStr) return;
+              const o = d.open !== undefined ? d.open : (d.open_price || d.previous_close || d.last_price);
+              const h = d.high !== undefined ? d.high : (d.high_price || d.previous_close || d.last_price);
+              const l = d.low !== undefined ? d.low : (d.low_price || d.previous_close || d.last_price);
+              const c = d.close !== undefined ? d.close : (d.close_price || d.last_price);
+              const v = d.volume !== undefined ? d.volume : (d.total_traded_quantity || 0);
+
+              if (o != null && c != null) {
+                out.push({ t: new Date(timeStr).getTime(), o, h, l, c, v });
+              }
+            });
+          }
+
+          // Sort chronologically
+          out.sort((a, b) => a.t - b.t);
+
+          // Save to cache
+          if (out.length > 0) {
+            dataCache[key] = out;
+          }
+          return out;
+        } catch (err) {
+          if (err.name === 'AbortError') throw err;
+          console.error('Failed to fetch data', err);
+          return [];
+        }
+      }
+
+      /* =====================================================================
+         STATE
+      ===================================================================== */
+      const state = {
+        symbol: 'RELIANCE',
+        tf: '1D',
+        chartType: 'candle', // candle | line | area | bar | heikinashi
+        data: [],
+        visibleCount: 110,
+        offsetFromEnd: 0, // 0 = latest candle at right edge
+        theme: 'dark',
+        indicators: {
+          overlays: [], // {id,type:'sma'|'ema'|'bb', period, stdev, color}
+          volume: true,
+          rsi: null, // {period}
+          macd: null // {fast,slow,signal}
+        },
+        drawings: [], // {id,type,points:[{i,p}], text, color}
+        activeTool: 'cursor',
+        selectedDrawing: null,
+        drawingInProgress: null,
+        hover: { active: false, x: 0, y: 0, index: -1 },
+        dragging: null, // {mode:'pan'|'drawing'|'move', startX, startOffset,...}
+        nextIndicatorColorIdx: 0
+      };
+
+      const OVERLAY_COLORS = ['#5b8cff', '#f5b942', '#c07bf0', '#3ddcc0', '#ff8a5c', '#8bd450'];
+
+      /* =====================================================================
+         DOM refs & layout building
+      ===================================================================== */
+      const panesEl = $('#panes');
+      const timeAxisCanvas = $('#timeAxisCanvas');
+      const timeAxisCtx = timeAxisCanvas.getContext('2d');
+
+      function makePaneDOM(id, height, isMain) {
+        const wrap = document.createElement('div');
+        wrap.className = 'pane-wrap' + (isMain ? '' : ' sub-pane');
+        wrap.id = id;
+        if (isMain) { wrap.style.flex = '1 1 auto'; wrap.style.minHeight = '120px'; }
+        else { wrap.style.height = height + 'px'; }
+        const mainCanvas = document.createElement('canvas'); mainCanvas.className = 'layer-main';
+        const overlayCanvas = document.createElement('canvas'); overlayCanvas.className = 'layer-overlay';
+        const label = document.createElement('div'); label.className = 'pane-label';
+        wrap.appendChild(mainCanvas); wrap.appendChild(overlayCanvas); wrap.appendChild(label);
+        return { wrap, mainCanvas, overlayCanvas, label };
+      }
+
+      const mainPaneDOM = makePaneDOM('main-pane', 0, true);
+      panesEl.appendChild(mainPaneDOM.wrap);
+      let rsiPaneDOM = null, macdPaneDOM = null;
+
+      const priceAxisWidth = 68;
+
+      /* =====================================================================
+         RENDER HELPERS: sizing
+      ===================================================================== */
+      function sizeCanvas(canvas, w, h) {
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.max(1, Math.round(w * dpr));
+        canvas.height = Math.max(1, Math.round(h * dpr));
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return ctx;
+      }
+
+      function layoutPanes() {
+        const rect = panesEl.getBoundingClientRect();
+        const w = rect.width;
+        // main pane
+        const mh = mainPaneDOM.wrap.getBoundingClientRect().height;
+        sizeCanvas(mainPaneDOM.mainCanvas, w, mh);
+        sizeCanvas(mainPaneDOM.overlayCanvas, w, mh);
+        if (rsiPaneDOM) {
+          const h = rsiPaneDOM.wrap.getBoundingClientRect().height;
+          sizeCanvas(rsiPaneDOM.mainCanvas, w, h);
+          sizeCanvas(rsiPaneDOM.overlayCanvas, w, h);
+        }
+        if (macdPaneDOM) {
+          const h = macdPaneDOM.wrap.getBoundingClientRect().height;
+          sizeCanvas(macdPaneDOM.mainCanvas, w, h);
+          sizeCanvas(macdPaneDOM.overlayCanvas, w, h);
+        }
+        const taRect = $('#time-axis-wrap').getBoundingClientRect();
+        sizeCanvas(timeAxisCanvas, taRect.width, taRect.height);
+      }
+
+      function rebuildSubPanes() {
+        if (rsiPaneDOM) { rsiPaneDOM.wrap.remove(); rsiPaneDOM = null; }
+        if (macdPaneDOM) { macdPaneDOM.wrap.remove(); macdPaneDOM = null; }
+        if (state.indicators.rsi) {
+          rsiPaneDOM = makePaneDOM('rsi-pane', 110, false);
+          panesEl.appendChild(rsiPaneDOM.wrap);
+          attachPaneEvents(rsiPaneDOM, 'rsi');
+        }
+        if (state.indicators.macd) {
+          macdPaneDOM = makePaneDOM('macd-pane', 110, false);
+          panesEl.appendChild(macdPaneDOM.wrap);
+          attachPaneEvents(macdPaneDOM, 'macd');
+        }
+        layoutPanes();
+        renderAll();
+      }
+
+      /* =====================================================================
+         SCALES
+      ===================================================================== */
+      function getVisibleRange() {
+        const n = state.data.length;
+        const end = n - 1 - state.offsetFromEnd;
+        const start = end - state.visibleCount + 1;
+        return { start, end };
+      }
+      function visibleSlice() {
+        const { start, end } = getVisibleRange();
+        const s = Math.max(0, start), e = Math.min(state.data.length - 1, end);
+        return state.data.slice(s, e + 1).map((d, idx) => ({ ...d, idx: s + idx }));
+      }
+      function xForIndex(index, plotW) {
+        const { start } = getVisibleRange();
+        const spacing = plotW / state.visibleCount;
+        return (index - start) * spacing + spacing / 2;
+      }
+      function spacingPx(plotW) { return plotW / state.visibleCount; }
+
+      function priceBounds(plotW, plotH) {
+        const vis = visibleSlice();
+        let min = Infinity, max = -Infinity;
+        if (vis.length === 0) { return { min: 0, max: 1 }; }
+        for (const d of vis) {
+          if (d.l < min) min = d.l;
+          if (d.h > max) max = d.h;
+        }
+        // include overlay indicators (BB) in bounds
+        for (const ov of state.indicators.overlays) {
+          if (ov.type === 'bb') {
+            const series = computeBB(state.data, ov.period, ov.stdev);
+            for (const d of vis) { const b = series[d.idx]; if (b) { if (b.upper > max) max = b.upper; if (b.lower < min) min = b.lower; } }
+          }
+        }
+        if (min === Infinity) { min = 0; max = 1; }
+        if (min === max) { min -= 1; max += 1; }
+        const pad = (max - min) * 0.08;
+        return { min: min - pad, max: max + pad };
+      }
+
+      function makeYScale(min, max, h, volReserve) {
+        const top = 4, bottom = h - 4 - (volReserve || 0);
+        return {
+          toY: (p) => top + (max - p) / (max - min) * (bottom - top),
+          toP: (y) => max - (y - top) / (bottom - top) * (max - min),
+          top, bottom
+        };
+      }
+
+      /* =====================================================================
+         INDICATOR MATH
+      ===================================================================== */
+      function computeSMA(data, period) {
+        const out = new Array(data.length).fill(null);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) {
+          sum += data[i].c;
+          if (i >= period) sum -= data[i - period].c;
+          if (i >= period - 1) out[i] = sum / period;
+        }
+        return out;
+      }
+      function computeEMA(data, period) {
+        const out = new Array(data.length).fill(null);
+        const k = 2 / (period + 1);
+        let prev = null;
+        for (let i = 0; i < data.length; i++) {
+          if (i === period - 1) {
+            let s = 0; for (let j = 0; j < period; j++) s += data[j].c;
+            prev = s / period; out[i] = prev;
+          } else if (i >= period) {
+            prev = data[i].c * k + prev * (1 - k);
+            out[i] = prev;
+          }
+        }
+        return out;
+      }
+      function computeBB(data, period, stdev) {
+        const sma = computeSMA(data, period);
+        const out = new Array(data.length).fill(null);
+        for (let i = 0; i < data.length; i++) {
+          if (sma[i] == null) continue;
+          let sq = 0;
+          for (let j = i - period + 1; j <= i; j++) { sq += Math.pow(data[j].c - sma[i], 2); }
+          const sd = Math.sqrt(sq / period);
+          out[i] = { mid: sma[i], upper: sma[i] + sd * stdev, lower: sma[i] - sd * stdev };
+        }
+        return out;
+      }
+      function computeRSI(data, period) {
+        const out = new Array(data.length).fill(null);
+        let gainSum = 0, lossSum = 0;
+        for (let i = 1; i < data.length; i++) {
+          const diff = data[i].c - data[i - 1].c;
+          const gain = Math.max(diff, 0), loss = Math.max(-diff, 0);
+          if (i <= period) { gainSum += gain; lossSum += loss; if (i === period) { const rs = lossSum === 0 ? 100 : gainSum / lossSum; out[i] = 100 - 100 / (1 + rs); } }
+          else {
+            gainSum = (gainSum * (period - 1) + gain) / period;
+            lossSum = (lossSum * (period - 1) + loss) / period;
+            const rs = lossSum === 0 ? 100 : gainSum / lossSum;
+            out[i] = 100 - 100 / (1 + rs);
+          }
+        }
+        return out;
+      }
+      function computeMACD(data, fast, slow, signal) {
+        const emaFast = computeEMA(data, fast);
+        const emaSlow = computeEMA(data, slow);
+        const macdLine = data.map((_, i) => (emaFast[i] != null && emaSlow[i] != null) ? emaFast[i] - emaSlow[i] : null);
+        // signal = EMA of macdLine over valid points
+        const sigOut = new Array(data.length).fill(null);
+        const k = 2 / (signal + 1);
+        let prev = null, count = 0, seedSum = 0, seedStart = -1;
+        for (let i = 0; i < data.length; i++) {
+          if (macdLine[i] == null) continue;
+          count++;
+          if (seedStart === -1) seedStart = i;
+          if (count <= signal) { seedSum += macdLine[i]; if (count === signal) { prev = seedSum / signal; sigOut[i] = prev; } }
+          else { prev = macdLine[i] * k + prev * (1 - k); sigOut[i] = prev; }
+        }
+        const hist = data.map((_, i) => (macdLine[i] != null && sigOut[i] != null) ? macdLine[i] - sigOut[i] : null);
+        return { macdLine, sigOut, hist };
+      }
+
+      /* =====================================================================
+         FORMATTING TIME
+      ===================================================================== */
+      function formatTimeLabel(t, tfId) {
+        const d = new Date(t);
+        if (tfId === '1m' || tfId === '5m' || tfId === '15m') {
+          return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+        }
+        if (tfId === '1h' || tfId === '4h') {
+          return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+        }
+        if (tfId === '1D') {
+          return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
+        }
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+
+      /* =====================================================================
+         RENDER: MAIN PANE
+      ===================================================================== */
+      function currentSymbolInfo() {
+        // Dummy fallback for dec formatting
+        return { dec: 2 };
+      }
+
+      function renderMainPane() {
+        const ctx = mainPaneDOM.mainCanvas.getContext('2d');
+        const rect = mainPaneDOM.wrap.getBoundingClientRect();
+        const w = rect.width, h = rect.height;
+        const plotW = w - priceAxisWidth;
+        ctx.clearRect(0, 0, w, h);
+
+        const styles = getComputedStyle(document.body);
+        const gridColor = styles.getPropertyValue('--grid').trim();
+        const borderColor = styles.getPropertyValue('--border').trim();
+        const textDim = styles.getPropertyValue('--text-dim').trim();
+        const bull = styles.getPropertyValue('--bull').trim();
+        const bear = styles.getPropertyValue('--bear').trim();
+
+        const dec = currentSymbolInfo().dec;
+        const volReserve = state.indicators.volume ? h * 0.18 : 0;
+        const { min, max } = priceBounds(plotW, h);
+        const scale = makeYScale(min, max, h, volReserve);
+
+        // grid
+        ctx.strokeStyle = gridColor; ctx.lineWidth = 1;
+        const gridLines = 5;
+        ctx.font = '10.5px ' + "'IBM Plex Mono', monospace";
+        for (let i = 0; i <= gridLines; i++) {
+          const p = min + (max - min) * i / gridLines;
+          const y = scale.toY(p);
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(plotW, y); ctx.stroke();
+          ctx.fillStyle = textDim;
+          ctx.fillText(fmtPrice(p, dec), plotW + 8, y + 3);
+        }
+
+        const vis = visibleSlice();
+        const spacing = spacingPx(plotW);
+        const candleW = Math.max(1, Math.min(spacing * 0.68, 14));
+
+        // volume bars
+        if (state.indicators.volume && vis.length) {
+          let maxVol = 0; for (const d of vis) if (d.v > maxVol) maxVol = d.v;
+          const volTop = h - volReserve, volBottom = h - 4;
+          for (const d of vis) {
+            const x = xForIndex(d.idx, plotW);
+            const vh = (d.v / maxVol) * (volBottom - volTop);
+            ctx.fillStyle = (d.c >= d.o ? bull : bear);
+            ctx.globalAlpha = 0.28;
+            ctx.fillRect(x - candleW / 2, volBottom - vh, candleW, vh);
+            ctx.globalAlpha = 1;
+          }
+        }
+
+        // price series
+        if (state.chartType === 'candle' || state.chartType === 'heikinashi') {
+          let series = vis;
+          if (state.chartType === 'heikinashi') {
+            series = toHeikinAshi(vis);
+          }
+          for (const d of series) {
+            const x = xForIndex(d.idx, plotW);
+            const up = d.c >= d.o;
+            ctx.strokeStyle = up ? bull : bear;
+            ctx.fillStyle = up ? bull : bear;
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x, scale.toY(d.h)); ctx.lineTo(x, scale.toY(d.l)); ctx.stroke();
+            const yo = scale.toY(d.o), yc = scale.toY(d.c);
+            const top = Math.min(yo, yc), bh = Math.max(Math.abs(yc - yo), 1);
+            ctx.fillRect(x - candleW / 2, top, candleW, bh);
+          }
+        } else if (state.chartType === 'bar') {
+          for (const d of vis) {
+            const x = xForIndex(d.idx, plotW);
+            const up = d.c >= d.o;
+            ctx.strokeStyle = up ? bull : bear; ctx.lineWidth = 1.4;
+            ctx.beginPath(); ctx.moveTo(x, scale.toY(d.h)); ctx.lineTo(x, scale.toY(d.l)); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x - candleW * 0.45, scale.toY(d.o)); ctx.lineTo(x, scale.toY(d.o)); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x, scale.toY(d.c)); ctx.lineTo(x + candleW * 0.45, scale.toY(d.c)); ctx.stroke();
+          }
+        } else if (state.chartType === 'line' || state.chartType === 'area') {
+          if (state.chartType === 'area') {
+            ctx.beginPath();
+            vis.forEach((d, i) => { const x = xForIndex(d.idx, plotW), y = scale.toY(d.c); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+            const lastX = xForIndex(vis[vis.length - 1].idx, plotW);
+            const firstX = xForIndex(vis[0].idx, plotW);
+            ctx.lineTo(lastX, h - 4); ctx.lineTo(firstX, h - 4); ctx.closePath();
+            const grad = ctx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, 'rgba(91,140,255,.35)'); grad.addColorStop(1, 'rgba(91,140,255,0)');
+            ctx.fillStyle = grad; ctx.fill();
+          }
+          ctx.beginPath();
+          vis.forEach((d, i) => { const x = xForIndex(d.idx, plotW), y = scale.toY(d.c); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+          ctx.strokeStyle = '#5b8cff'; ctx.lineWidth = 1.8; ctx.stroke();
+        }
+
+        // overlays: SMA/EMA/BB
+        const legendItems = [];
+        for (const ov of state.indicators.overlays) {
+          let seriesVal, label;
+          if (ov.type === 'sma') { seriesVal = computeSMA(state.data, ov.period); label = `SMA ${ov.period}`; drawLine(ctx, seriesVal, plotW, scale, ov.color); }
+          else if (ov.type === 'ema') { seriesVal = computeEMA(state.data, ov.period); label = `EMA ${ov.period}`; drawLine(ctx, seriesVal, plotW, scale, ov.color); }
+          else if (ov.type === 'bb') {
+            const bb = computeBB(state.data, ov.period, ov.stdev);
+            label = `BB ${ov.period},${ov.stdev}`;
+            drawLine(ctx, bb.map(v => v ? v.upper : null), plotW, scale, ov.color, 0.7);
+            drawLine(ctx, bb.map(v => v ? v.lower : null), plotW, scale, ov.color, 0.7);
+            drawLine(ctx, bb.map(v => v ? v.mid : null), plotW, scale, ov.color, 0.35, [3, 3]);
+          }
+          const lastVal = ov.type === 'bb' ? null : (seriesVal && seriesVal[state.data.length - 1]);
+          legendItems.push({ id: ov.id, color: ov.color, label, val: lastVal != null ? fmtPrice(lastVal, dec) : '' });
+        }
+        renderLegend(mainPaneDOM.label, legendItems, true);
+
+        // last price line
+        if (state.data.length) {
+          const last = state.data[state.data.length - 1];
+          const y = scale.toY(last.c);
+          ctx.strokeStyle = last.c >= last.o ? bull : bear;
+          ctx.setLineDash([2, 3]); ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(plotW, y); ctx.stroke(); ctx.setLineDash([]);
+          ctx.fillStyle = last.c >= last.o ? bull : bear;
+          ctx.fillRect(plotW, y - 8, priceAxisWidth - 2, 16);
+          ctx.fillStyle = '#0a0d12'; ctx.font = '11px ' + "'IBM Plex Mono', monospace"; ctx.textAlign = 'left';
+          ctx.fillText(fmtPrice(last.c, dec), plotW + 6, y + 4);
+          ctx.textAlign = 'left';
+        }
+
+        // axis border
+        ctx.strokeStyle = borderColor; ctx.beginPath(); ctx.moveTo(plotW, 0); ctx.lineTo(plotW, h); ctx.stroke();
+
+        mainPaneDOM._layout = { w, h, plotW, scale, min, max, volReserve };
+      }
+
+      function toHeikinAshi(vis) {
+        const out = []; let prevO = null, prevC = null;
+        for (const d of vis) {
+          const c = (d.o + d.h + d.l + d.c) / 4;
+          const o = prevO == null ? (d.o + d.c) / 2 : (prevO + prevC) / 2;
+          const h = Math.max(d.h, o, c);
+          const l = Math.min(d.l, o, c);
+          out.push({ ...d, o, h, l, c });
+          prevO = o; prevC = c;
+        }
+        return out;
+      }
+
+      function drawLine(ctx, arr, plotW, scale, color, alpha, dash) {
+        ctx.save();
+        ctx.strokeStyle = color; ctx.globalAlpha = alpha == null ? 1 : alpha; ctx.lineWidth = 1.3;
+        if (dash) ctx.setLineDash(dash);
+        const { start, end } = getVisibleRange();
+        let started = false;
+        ctx.beginPath();
+        for (let i = Math.max(0, start); i <= Math.min(state.data.length - 1, end); i++) {
+          const v = arr[i]; if (v == null) { started = false; continue; }
+          const x = xForIndex(i, plotW); const y = scale.toY(v);
+          if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+        }
+        ctx.stroke(); ctx.restore();
+      }
+
+      function renderLegend(container, items, includeSymbol) {
+        container.innerHTML = '';
+        if (includeSymbol) {
+          const s = document.createElement('div'); s.className = 'item';
+          s.innerHTML = `<b style="color:var(--text);font-weight:700;">${state.symbol}</b><span class="val">· ${TIMEFRAMES.find(t => t.id === state.tf).label} · ${state.chartType}</span>`;
+          container.appendChild(s);
+        }
+        for (const it of items) {
+          const el = document.createElement('div'); el.className = 'item';
+          el.innerHTML = `<span class="swatch" style="background:${it.color}"></span><span>${it.label}</span><span class="val">${it.val || ''}</span><span class="rm" data-id="${it.id}">✕</span>`;
+          container.appendChild(el);
+        }
+        container.querySelectorAll('.rm').forEach(btn => {
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            state.indicators.overlays = state.indicators.overlays.filter(o => o.id !== id);
+            renderAll();
+          };
+        });
+      }
+
+      /* =====================================================================
+         RENDER: RSI / MACD panes
+      ===================================================================== */
+      function renderRSIPane() {
+        if (!rsiPaneDOM) return;
+        const ctx = rsiPaneDOM.mainCanvas.getContext('2d');
+        const rect = rsiPaneDOM.wrap.getBoundingClientRect();
+        const w = rect.width, h = rect.height, plotW = w - priceAxisWidth;
+        ctx.clearRect(0, 0, w, h);
+        const styles = getComputedStyle(document.body);
+        const gridColor = styles.getPropertyValue('--grid').trim();
+        const textDim = styles.getPropertyValue('--text-dim').trim();
+        const borderColor = styles.getPropertyValue('--border').trim();
+
+        const rsi = computeRSI(state.data, state.indicators.rsi.period);
+        const scale = makeYScale(0, 100, h, 0);
+        ctx.strokeStyle = gridColor; ctx.font = '10px ' + "'IBM Plex Mono', monospace";
+        [20, 50, 80].forEach(v => {
+          const y = scale.toY(v);
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(plotW, y); ctx.stroke();
+          ctx.fillStyle = textDim; ctx.fillText(v, plotW + 8, y + 3);
+        });
+        drawLine(ctx, rsi, plotW, scale, '#c07bf0');
+        const lastRsi = rsi[state.data.length - 1];
+        renderLegend(rsiPaneDOM.label, [{ id: 'rsi', color: '#c07bf0', label: `RSI ${state.indicators.rsi.period}`, val: lastRsi != null ? lastRsi.toFixed(1) : '' }], false);
+        ctx.strokeStyle = borderColor; ctx.beginPath(); ctx.moveTo(plotW, 0); ctx.lineTo(plotW, h); ctx.stroke();
+        rsiPaneDOM._layout = { w, h, plotW, scale };
+      }
+
+      function renderMACDPane() {
+        if (!macdPaneDOM) return;
+        const ctx = macdPaneDOM.mainCanvas.getContext('2d');
+        const rect = macdPaneDOM.wrap.getBoundingClientRect();
+        const w = rect.width, h = rect.height, plotW = w - priceAxisWidth;
+        ctx.clearRect(0, 0, w, h);
+        const styles = getComputedStyle(document.body);
+        const gridColor = styles.getPropertyValue('--grid').trim();
+        const textDim = styles.getPropertyValue('--text-dim').trim();
+        const borderColor = styles.getPropertyValue('--border').trim();
+        const bull = styles.getPropertyValue('--bull').trim();
+        const bear = styles.getPropertyValue('--bear').trim();
+
+        const { fast, slow, signal } = state.indicators.macd;
+        const { macdLine, sigOut, hist } = computeMACD(state.data, fast, slow, signal);
+        const vis = visibleSlice();
+        let mn = Infinity, mx = -Infinity;
+        for (const d of vis) {
+          const i = d.idx;
+          [macdLine[i], sigOut[i], hist[i]].forEach(v => { if (v != null) { if (v < mn) mn = v; if (v > mx) mx = v; } });
+        }
+        if (mn === Infinity) { mn = -1; mx = 1; }
+        if (mn === mx) { mn -= 1; mx += 1; }
+        const padv = (mx - mn) * 0.15; mn -= padv; mx += padv;
+        const scale = makeYScale(mn, mx, h, 0);
+
+        ctx.strokeStyle = gridColor; ctx.font = '10px ' + "'IBM Plex Mono', monospace";
+        const zeroY = scale.toY(0);
+        ctx.beginPath(); ctx.moveTo(0, zeroY); ctx.lineTo(plotW, zeroY); ctx.stroke();
+        ctx.fillStyle = textDim; ctx.fillText('0', plotW + 8, zeroY + 3);
+
+        const spacing = spacingPx(plotW);
+        const barW = Math.max(1, Math.min(spacing * 0.6, 10));
+        for (const d of vis) {
+          const v = hist[d.idx]; if (v == null) continue;
+          const x = xForIndex(d.idx, plotW);
+          const y0 = scale.toY(0), y1 = scale.toY(v);
+          ctx.fillStyle = v >= 0 ? bull : bear; ctx.globalAlpha = 0.55;
+          ctx.fillRect(x - barW / 2, Math.min(y0, y1), barW, Math.max(Math.abs(y1 - y0), 1));
+          ctx.globalAlpha = 1;
+        }
+        drawLine(ctx, macdLine, plotW, scale, '#5b8cff');
+        drawLine(ctx, sigOut, plotW, scale, '#f5b942');
+
+        const li = macdLine[state.data.length - 1], si = sigOut[state.data.length - 1];
+        renderLegend(macdPaneDOM.label, [
+          { id: 'macd1', color: '#5b8cff', label: `MACD ${fast},${slow},${signal}`, val: li != null ? li.toFixed(2) : '' },
+          { id: 'macd2', color: '#f5b942', label: 'Signal', val: si != null ? si.toFixed(2) : '' }
+        ], false);
+        ctx.strokeStyle = borderColor; ctx.beginPath(); ctx.moveTo(plotW, 0); ctx.lineTo(plotW, h); ctx.stroke();
+        macdPaneDOM._layout = { w, h, plotW, scale };
+      }
+
+      /* =====================================================================
+         TIME AXIS
+      ===================================================================== */
+      function renderTimeAxis() {
+        const rect = $('#time-axis-wrap').getBoundingClientRect();
+        const w = rect.width, h = rect.height, plotW = w - priceAxisWidth;
+        timeAxisCtx.clearRect(0, 0, w, h);
+        const styles = getComputedStyle(document.body);
+        const textDim = styles.getPropertyValue('--text-dim').trim();
+        timeAxisCtx.font = '10.5px ' + "'IBM Plex Mono', monospace";
+        timeAxisCtx.fillStyle = textDim;
+        const vis = visibleSlice();
+        if (!vis.length) return;
+        const spacing = spacingPx(plotW);
+        const targetLabelGap = 90;
+        const step = Math.max(1, Math.round(targetLabelGap / spacing));
+        for (let k = 0; k < vis.length; k += step) {
+          const d = vis[k];
+          const x = xForIndex(d.idx, plotW);
+          const label = formatTimeLabel(d.t, state.tf);
+          timeAxisCtx.fillText(label, x - 20, 17);
+        }
+      }
+
+      /* =====================================================================
+         CROSSHAIR + DRAWINGS overlay (per pane)
+      ===================================================================== */
+      function clearOverlay(dom) {
+        const rect = dom.wrap.getBoundingClientRect();
+        const ctx = dom.overlayCanvas.getContext('2d');
+        ctx.clearRect(0, 0, rect.width, rect.height);
+      }
+
+      function renderCrosshair() {
+        [mainPaneDOM, rsiPaneDOM, macdPaneDOM].forEach(dom => { if (dom) clearOverlay(dom); });
+        const readout = $('#crosshair-readout');
+        if (!state.hover.active || state.hover.index < 0) { readout.style.display = 'none'; return; }
+        const styles = getComputedStyle(document.body);
+        const textFaint = styles.getPropertyValue('--text-faint').trim();
+
+        const idx = state.hover.index;
+        const d = state.data[idx];
+        if (!d) { readout.style.display = 'none'; return; }
+
+        [mainPaneDOM, rsiPaneDOM, macdPaneDOM].forEach(dom => {
+          if (!dom || !dom._layout) return;
+          const { plotW, h } = dom._layout;
+          const ctx = dom.overlayCanvas.getContext('2d');
+          const x = xForIndex(idx, plotW);
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+          if (dom === mainPaneDOM && state.hover.y != null) {
+            ctx.beginPath(); ctx.moveTo(0, state.hover.y); ctx.lineTo(plotW, state.hover.y); ctx.stroke();
+          }
+          ctx.restore();
+        });
+
+        const dec = currentSymbolInfo().dec;
+        const up = d.c >= d.o;
+        readout.innerHTML = `<div>${formatTimeLabel(d.t, state.tf)}</div>
+    <div>O <b>${fmtPrice(d.o, dec)}</b> H <b>${fmtPrice(d.h, dec)}</b></div>
+    <div>L <b>${fmtPrice(d.l, dec)}</b> C <b class="${up ? 'g' : 'r'}">${fmtPrice(d.c, dec)}</b></div>
+    <div>Vol <b>${(d.v / 1000).toFixed(1)}K</b></div>`;
+        readout.style.display = 'block';
+
+        renderDrawings();
+      }
+
+      /* =====================================================================
+         DRAWINGS
+      ===================================================================== */
+      function priceAtY(y) {
+        const { scale } = mainPaneDOM._layout;
+        return scale.toP(y);
+      }
+      function indexAtX(x) {
+        const { plotW } = mainPaneDOM._layout;
+        const { start } = getVisibleRange();
+        const spacing = spacingPx(plotW);
+        return Math.round(start + x / spacing - 0.5);
+      }
+
+      function renderDrawings() {
+        if (!mainPaneDOM._layout) return;
+        const { plotW, scale, h } = mainPaneDOM._layout;
+        const ctx = mainPaneDOM.overlayCanvas.getContext('2d');
+        const dec = currentSymbolInfo().dec;
+
+        function pt(p) { return { x: xForIndex(p.i, plotW), y: scale.toY(p.p) }; }
+
+        for (const dr of state.drawings) {
+          const selected = dr.id === state.selectedDrawing;
+          ctx.save();
+          ctx.strokeStyle = selected ? '#fff' : (dr.color || '#5b8cff');
+          ctx.fillStyle = dr.color || '#5b8cff';
+          ctx.lineWidth = selected ? 2.2 : 1.5;
+          if (dr.type === 'hline') {
+            const y = scale.toY(dr.points[0].p);
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(plotW, y); ctx.stroke();
+            ctx.font = '10px ' + "'IBM Plex Mono', monospace"; ctx.fillStyle = selected ? '#fff' : (dr.color || '#5b8cff');
+            ctx.fillText(fmtPrice(dr.points[0].p, dec), 6, y - 4);
+          } else if (dr.type === 'trend') {
+            const a = pt(dr.points[0]), b = pt(dr.points[1]);
+            ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+            drawHandle(ctx, a); drawHandle(ctx, b);
+          } else if (dr.type === 'rect') {
+            const a = pt(dr.points[0]), b = pt(dr.points[1]);
+            const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y), ww = Math.abs(b.x - a.x), hh = Math.abs(b.y - a.y);
+            ctx.globalAlpha = 0.12; ctx.fillRect(x, y, ww, hh); ctx.globalAlpha = 1;
+            ctx.strokeRect(x, y, ww, hh);
+            drawHandle(ctx, a); drawHandle(ctx, b);
+          } else if (dr.type === 'fib') {
+            const a = dr.points[0], b = dr.points[1];
+            const levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
+            const x1 = xForIndex(a.i, plotW), x2 = xForIndex(b.i, plotW);
+            const xL = Math.min(x1, x2), xR = Math.max(x1, x2);
+            levels.forEach(l => {
+              const price = a.p + (b.p - a.p) * l;
+              const y = scale.toY(price);
+              ctx.globalAlpha = selected ? 1 : 0.85;
+              ctx.beginPath(); ctx.moveTo(xL, y); ctx.lineTo(xR, y); ctx.stroke();
+              ctx.font = '10px ' + "'IBM Plex Mono', monospace";
+              ctx.fillText(`${(l * 100).toFixed(1)}%  ${fmtPrice(price, dec)}`, xR + 4, y + 3);
+            });
+            ctx.globalAlpha = 1;
+          } else if (dr.type === 'text') {
+            const a = pt(dr.points[0]);
+            ctx.font = '12px ' + "'Inter', sans-serif"; ctx.fillStyle = selected ? '#fff' : (dr.color || '#e7ebf1');
+            ctx.fillText(dr.text || '', a.x, a.y);
+          }
+          ctx.restore();
+        }
+
+        // drawing in progress preview
+        if (state.drawingInProgress) {
+          const dp = state.drawingInProgress;
+          ctx.save();
+          ctx.strokeStyle = '#5b8cff'; ctx.setLineDash([4, 3]); ctx.lineWidth = 1.4;
+          if (dp.points.length === 2) {
+            const a = pt(dp.points[0]), b = pt(dp.points[1]);
+            if (dp.type === 'rect') {
+              const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y);
+              ctx.strokeRect(x, y, Math.abs(b.x - a.x), Math.abs(b.y - a.y));
+            } else {
+              ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+            }
+          }
+          ctx.restore();
+        }
+      }
+      function drawHandle(ctx, p) {
+        ctx.save(); ctx.fillStyle = '#0a0d12'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 7); ctx.fill(); ctx.stroke(); ctx.restore();
+      }
+
+      function hitTestDrawing(x, y) {
+        if (!mainPaneDOM._layout) return null;
+        const { plotW, scale } = mainPaneDOM._layout;
+        const thresh = 6;
+        function pt(p) { return { x: xForIndex(p.i, plotW), y: scale.toY(p.p) }; }
+        function distToSeg(px, py, ax, ay, bx, by) {
+          const dx = bx - ax, dy = by - ay;
+          const len2 = dx * dx + dy * dy;
+          let t = len2 === 0 ? 0 : ((px - ax) * dx + (py - ay) * dy) / len2;
+          t = clamp(t, 0, 1);
+          const cx = ax + dx * t, cy = ay + dy * t;
+          return Math.hypot(px - cx, py - cy);
+        }
+        for (let i = state.drawings.length - 1; i >= 0; i--) {
+          const dr = state.drawings[i];
+          if (dr.type === 'hline') {
+            const yy = scale.toY(dr.points[0].p);
+            if (Math.abs(y - yy) < thresh) return dr.id;
+          } else if (dr.type === 'trend' || dr.type === 'fib') {
+            const a = pt(dr.points[0]), b = pt(dr.points[1]);
+            if (distToSeg(x, y, a.x, a.y, b.x, b.y) < thresh) return dr.id;
+          } else if (dr.type === 'rect') {
+            const a = pt(dr.points[0]), b = pt(dr.points[1]);
+            const xL = Math.min(a.x, b.x), xR = Math.max(a.x, b.x), yT = Math.min(a.y, b.y), yB = Math.max(a.y, b.y);
+            const onBorder = (Math.abs(x - xL) < thresh || Math.abs(x - xR) < thresh) && y > yT - thresh && y < yB + thresh ||
+              (Math.abs(y - yT) < thresh || Math.abs(y - yB) < thresh) && x > xL - thresh && x < xR + thresh;
+            if (onBorder) return dr.id;
+          } else if (dr.type === 'text') {
+            const a = pt(dr.points[0]);
+            if (Math.abs(x - a.x) < 40 && Math.abs(y - a.y) < 12) return dr.id;
+          }
+        }
+        return null;
+      }
+
+      /* =====================================================================
+         MASTER RENDER
+      ===================================================================== */
+      let renderQueued = false;
+      function renderAll() {
+        if (renderQueued) return;
+        renderQueued = true;
+        requestAnimationFrame(() => {
+          renderQueued = false;
+          renderMainPane();
+          renderRSIPane();
+          renderMACDPane();
+          renderTimeAxis();
+          renderCrosshair();
+        });
+      }
+
+      /* =====================================================================
+         EVENTS: pan / zoom / draw
+      ===================================================================== */
+      function attachPaneEvents(dom, paneKey) {
+        const el = dom.wrap;
+
+        el.addEventListener('mousedown', (e) => {
+          const rect = el.getBoundingClientRect();
+          const x = e.clientX - rect.left, y = e.clientY - rect.top;
+          if (x > rect.width - priceAxisWidth) return;
+
+          if (state.activeTool === 'cursor') {
+            const hitId = hitTestDrawing(x, y);
+            if (hitId) {
+              state.selectedDrawing = hitId;
+              const dr = state.drawings.find(d => d.id === hitId);
+              state.dragging = { mode: 'move', drawing: dr, startX: x, startY: y, origPoints: JSON.parse(JSON.stringify(dr.points)) };
+              renderAll();
+              return;
+            }
+            state.selectedDrawing = null;
+            state.dragging = { mode: 'pan', startX: x, startOffset: state.offsetFromEnd };
+            renderAll();
+            return;
+          }
+
+          // drawing tools (main price pane only)
+          if (paneKey !== 'main') { toast('Switch to the price pane to draw'); return; }
+          if (!mainPaneDOM._layout) return;
+          const idx = indexAtX(x);
+          const price = priceAtY(y);
+          if (state.activeTool === 'hline') {
+            addDrawing({ type: 'hline', points: [{ i: idx, p: price }], color: '#5b8cff' });
+            setTool('cursor');
+            return;
+          }
+          if (state.activeTool === 'text') {
+            const txt = prompt('Annotation text:');
+            if (txt) { addDrawing({ type: 'text', points: [{ i: idx, p: price }], text: txt, color: '#e7ebf1' }); }
+            setTool('cursor');
+            return;
+          }
+          if (['trend', 'rect', 'fib'].includes(state.activeTool)) {
+            if (!state.drawingInProgress) {
+              state.drawingInProgress = { type: state.activeTool, points: [{ i: idx, p: price }] };
+            } else {
+              const finalDrawing = {
+                type: state.drawingInProgress.type,
+                points: [state.drawingInProgress.points[0], { i: idx, p: price }]
+              };
+              addDrawing(finalDrawing);
+              state.drawingInProgress = null;
+              setTool('cursor');
+            }
+            renderAll();
+            return;
+          }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          const rect = el.getBoundingClientRect();
+          const x = e.clientX - rect.left, y = e.clientY - rect.top;
+          const inside = x >= 0 && x <= rect.width && y >= 0 && y <= rect.height;
+
+          if (state.dragging) {
+            if (state.dragging.mode === 'pan') {
+              const { plotW } = mainPaneDOM._layout || { plotW: rect.width - priceAxisWidth };
+              const spacing = spacingPx(plotW);
+              const dx = x - state.dragging.startX;
+              const dCandles = Math.round(-dx / spacing);
+              let newOffset = state.dragging.startOffset + dCandles;
+              newOffset = clamp(newOffset, 0, Math.max(0, state.data.length - Math.min(20, state.visibleCount)));
+              state.offsetFromEnd = newOffset;
+              renderAll();
+            } else if (state.dragging.mode === 'move' && mainPaneDOM._layout) {
+              const idx = indexAtX(x);
+              const price = priceAtY(y);
+              const startIdx = indexAtX(state.dragging.startX);
+              const startPrice = priceAtY(state.dragging.startY);
+              const deltaI = idx - startIdx, deltaP = price - startPrice;
+              state.dragging.drawing.points = state.dragging.origPoints.map(p => ({ i: p.i + deltaI, p: p.p + deltaP }));
+              renderAll();
+            }
+            return;
+          }
+
+          if (inside && x <= rect.width - priceAxisWidth && mainPaneDOM._layout) {
+            state.hover.active = true;
+            state.hover.index = indexAtX(x);
+            state.hover.y = y;
+            // update readout tied to main pane y only if this pane is main
+            if (paneKey !== 'main') { state.hover.y = null; }
+            renderCrosshair();
+          } else if (!state.dragging) {
+            state.hover.active = false;
+            renderCrosshair();
+          }
+
+          // drawing-in-progress live preview
+          if (state.drawingInProgress && mainPaneDOM._layout && inside) {
+            const idx = indexAtX(x); const price = priceAtY(y);
+            const preview = { type: state.drawingInProgress.type, points: [state.drawingInProgress.points[0], { i: idx, p: price }] };
+            state.drawingInProgress = preview;
+            renderCrosshair();
+          }
+        });
+
+        window.addEventListener('mouseup', () => {
+          if (state.dragging) { state.dragging = null; }
+        });
+
+        el.addEventListener('mouseleave', () => {
+          if (!state.dragging) { state.hover.active = false; renderCrosshair(); }
+        });
+
+        el.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          const rect = el.getBoundingClientRect();
+          const dir = e.deltaY > 0 ? 1 : -1;
+          const factor = 1.12;
+          let newCount = dir > 0 ? state.visibleCount * factor : state.visibleCount / factor;
+          newCount = clamp(Math.round(newCount), 15, Math.min(800, state.data.length));
+          state.visibleCount = newCount;
+          renderAll();
+        }, { passive: false });
+
+        el.addEventListener('dblclick', () => {
+          if (state.activeTool === 'cursor') {
+            state.offsetFromEnd = 0; state.visibleCount = 110;
+            renderAll();
+          }
+        });
+      }
+      attachPaneEvents(mainPaneDOM, 'main');
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          state.drawingInProgress = null; setTool('cursor'); renderAll();
+        }
+        if ((e.key === 'Delete' || e.key === 'Backspace') && state.selectedDrawing) {
+          if (document.activeElement.tagName === 'INPUT') return;
+          state.drawings = state.drawings.filter(d => d.id !== state.selectedDrawing);
+          state.selectedDrawing = null;
+          renderAll();
+        }
+      });
+
+      function addDrawing(d) {
+        d.id = 'd' + Math.random().toString(36).slice(2, 9);
+        if (!d.color) d.color = '#5b8cff';
+        state.drawings.push(d);
+        renderAll();
+      }
+
+      /* =====================================================================
+         LEFT TOOLBAR (drawing tools)
+      ===================================================================== */
+      const TOOLS = [
+        { id: 'cursor', name: 'Cursor', icon: `<path d="M4 3l14 6-6 2-2 6-6-14z"/>` },
+        { id: 'trend', name: 'Trend Line', icon: `<path d="M3 17 L17 3"/><circle cx="3" cy="17" r="1.6" fill="currentColor"/><circle cx="17" cy="3" r="1.6" fill="currentColor"/>` },
+        { id: 'hline', name: 'Horizontal Line', icon: `<path d="M2 10h16"/><circle cx="10" cy="10" r="1.6" fill="currentColor"/>` },
+        { id: 'rect', name: 'Rectangle', icon: `<rect x="3" y="5" width="14" height="10" rx="1"/>` },
+        { id: 'fib', name: 'Fibonacci Retracement', icon: `<path d="M2 4h16M2 8h16M2 12h16M2 16h16" stroke-width="1.1"/>` },
+        { id: 'text', name: 'Text', icon: `<path d="M4 4h12M10 4v12" stroke-width="1.6"/>` },
+      ];
+      const leftToolbar = $('#left-toolbar');
+      TOOLS.forEach((t, i) => {
+        const btn = document.createElement('div');
+        btn.className = 'lt-btn' + (t.id === 'cursor' ? ' active' : '');
+        btn.dataset.tool = t.id;
+        btn.innerHTML = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${t.icon}</svg><span class="tip">${t.name}</span>`;
+        btn.onclick = () => setTool(t.id);
+        leftToolbar.appendChild(btn);
+        if (i === 0) { const sep = document.createElement('div'); sep.className = 'lt-sep'; leftToolbar.appendChild(sep); }
+      });
+      const sep2 = document.createElement('div'); sep2.className = 'lt-sep'; leftToolbar.appendChild(sep2);
+      const clearBtn = document.createElement('div'); clearBtn.className = 'lt-btn';
+      clearBtn.innerHTML = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h12M8 6V4h4v2M6 6l1 10h6l1-10"/></svg><span class="tip">Clear All Drawings</span>`;
+      clearBtn.onclick = () => {
+        if (state.drawings.length === 0) { toast('No drawings to clear'); return; }
+        state.drawings = []; state.selectedDrawing = null; renderAll(); toast('Drawings cleared');
+      };
+      leftToolbar.appendChild(clearBtn);
+
+      function setTool(id) {
+        state.activeTool = id;
+        state.drawingInProgress = null;
+        $$('.lt-btn').forEach(b => b.classList.toggle('active', b.dataset.tool === id));
+        $('#ctx-hint').style.display = (id === 'cursor') ? 'none' : 'block';
+        renderAll();
+      }
+
+      /* =====================================================================
+         TOP BAR: timeframe buttons
+      ===================================================================== */
+      const tfGroup = $('#tfGroup');
+      TIMEFRAMES.forEach(tf => {
+        const b = document.createElement('button');
+        b.className = 'tf-btn' + (tf.id === state.tf ? ' active' : '');
+        b.textContent = tf.label;
+        b.dataset.tf = tf.id;
+        b.onclick = () => switchTimeframe(tf.id);
+        tfGroup.appendChild(b);
+      });
+      function switchTimeframe(tfId) {
+        state.tf = tfId;
+        loadData();
+        $$('.tf-btn').forEach(b => b.classList.toggle('active', b.dataset.tf === tfId));
+        renderAll();
+      }
+
+      async function loadData() {
+        $('#watermark').textContent = `Loading ${state.symbol}...`;
+        try {
+          const freshData = await fetchRealData(state.symbol, state.tf);
+          if (freshData && freshData.length > 0) {
+            state.data = freshData;
+            state.offsetFromEnd = 0;
+            state.visibleCount = Math.min(110, state.data.length);
+            $('#watermark').textContent = state.symbol;
+
+            // Update top bar price
+            const last = state.data[state.data.length - 1];
+            const pxEl = $('#symbolPx');
+            if (last) {
+              pxEl.textContent = fmtPrice(last.c, 2);
+              pxEl.className = 'px ' + (last.c >= last.o ? 'up' : 'down');
+            }
+
+            renderAll();
+          } else {
+            $('#watermark').textContent = `No data for ${state.symbol}`;
+            state.data = [];
+            renderAll();
+          }
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            $('#watermark').textContent = 'Error loading data';
+          }
+        }
+      }
+
+      // ---------------------------------------------------------------------
+      // IPC Listener from Parent Window
+      // ---------------------------------------------------------------------
+      window.addEventListener('message', (e) => {
+        if (e.data && e.data.type === 'LOAD_SYMBOL') {
+          const newSym = e.data.symbol;
+          if (newSym && newSym !== state.symbol) {
+            state.symbol = newSym;
+            $('#symbolLabel').textContent = newSym;
+            loadData();
+          }
+        }
+      });
+
+      /* =====================================================================
+         SYMBOL DROPDOWN
+      ===================================================================== */
+      const symbolDD = $('#symbol-dd');
+      const symbolList = $('#symbol-list');
+      function renderSymbolList(filter) {
+        symbolList.innerHTML = '';
+        const f = (filter || '').toLowerCase();
+        SYMBOLS.filter(s => !f || s.sym.toLowerCase().includes(f) || s.name.toLowerCase().includes(f)).forEach(s => {
+          const el = document.createElement('div'); el.className = 'dd-item';
+          el.innerHTML = `<span><span class="name">${s.sym}</span><span class="full">${s.name}</span></span><span class="meta">${s.dec === 4 ? 'FX' : '—'}</span>`;
+          el.onclick = () => {
+            state.symbol = s.sym;
+            $('#symbolLabel').textContent = s.sym;
+            $('#watermark').textContent = s.sym;
+            loadData();
+            closeAllDropdowns();
+            updateSymbolPrice();
+            renderAll();
+          };
+          symbolList.appendChild(el);
+        });
+      }
+      $('#symbol-search').addEventListener('input', (e) => renderSymbolList(e.target.value));
+
+      function updateSymbolPrice() {
+        const last = state.data[state.data.length - 1];
+        const prev = state.data[state.data.length - 2] || last;
+        const el = $('#symbolPx');
+        const dec = currentSymbolInfo().dec;
+        el.textContent = fmtPrice(last.c, dec);
+        el.className = 'px ' + (last.c >= prev.c ? 'up' : 'down');
+      }
+
+      /* =====================================================================
+         CHART TYPE DROPDOWN
+      ===================================================================== */
+      const CHART_TYPES = [
+        { id: 'candle', label: 'Candles' },
+        { id: 'heikinashi', label: 'Heikin Ashi' },
+        { id: 'bar', label: 'Bars (OHLC)' },
+        { id: 'line', label: 'Line' },
+        { id: 'area', label: 'Area' },
+      ];
+      const typeDD = $('#type-dd');
+      CHART_TYPES.forEach(t => {
+        const el = document.createElement('div'); el.className = 'dd-item';
+        el.textContent = t.label; el.dataset.type = t.id;
+        el.onclick = () => {
+          state.chartType = t.id;
+          $('#typeLabel').textContent = t.label;
+          closeAllDropdowns();
+          renderAll();
+        };
+        typeDD.appendChild(el);
+      });
+
+      /* =====================================================================
+         INDICATORS DROPDOWN
+      ===================================================================== */
+      const indDD = $('#ind-dd');
+      function buildIndicatorMenu() {
+        indDD.innerHTML = '';
+        const cat1 = document.createElement('div'); cat1.className = 'ind-cat'; cat1.textContent = 'Overlays'; indDD.appendChild(cat1);
+
+        addIndRow('Simple Moving Average', 'Add SMA(20) to price chart', () => {
+          addOverlay({ type: 'sma', period: 20 });
+        });
+        addIndRow('Exponential Moving Average', 'Add EMA(21) to price chart', () => {
+          addOverlay({ type: 'ema', period: 21 });
+        });
+        addIndRow('Bollinger Bands', 'Add BB(20, 2) to price chart', () => {
+          addOverlay({ type: 'bb', period: 20, stdev: 2 });
+        });
+
+        const cat2 = document.createElement('div'); cat2.className = 'ind-cat'; cat2.textContent = 'Panes'; indDD.appendChild(cat2);
+        addIndRow('RSI', 'Relative Strength Index (14) — new pane', () => {
+          if (state.indicators.rsi) { toast('RSI already added'); return; }
+          state.indicators.rsi = { period: 14 }; rebuildSubPanes();
+        }, () => !!state.indicators.rsi);
+        addIndRow('MACD', '12, 26, 9 — new pane', () => {
+          if (state.indicators.macd) { toast('MACD already added'); return; }
+          state.indicators.macd = { fast: 12, slow: 26, signal: 9 }; rebuildSubPanes();
+        }, () => !!state.indicators.macd);
+
+        const cat3 = document.createElement('div'); cat3.className = 'ind-cat'; cat3.textContent = 'Volume'; indDD.appendChild(cat3);
+        const volRow = document.createElement('div'); volRow.className = 'ind-row';
+        volRow.innerHTML = `<span class="name">Volume<span class="desc">Histogram at chart base</span></span>`;
+        const volBtn = document.createElement('button'); volBtn.className = 'add-btn';
+        volBtn.textContent = state.indicators.volume ? 'Remove' : 'Add';
+        volBtn.onclick = () => {
+          state.indicators.volume = !state.indicators.volume;
+          volBtn.textContent = state.indicators.volume ? 'Remove' : 'Add';
+          renderAll();
+        };
+        volRow.appendChild(volBtn); indDD.appendChild(volRow);
+      }
+      function addIndRow(name, desc, onAdd, isAddedFn) {
+        const row = document.createElement('div'); row.className = 'ind-row';
+        row.innerHTML = `<span class="name">${name}<span class="desc">${desc}</span></span>`;
+        const btn = document.createElement('button'); btn.className = 'add-btn'; btn.textContent = 'Add';
+        if (isAddedFn && isAddedFn()) btn.textContent = 'Added';
+        btn.onclick = () => { onAdd(); buildIndicatorMenu(); };
+        row.appendChild(btn); indDD.appendChild(row);
+      }
+      function addOverlay(cfg) {
+        cfg.id = 'ov' + Math.random().toString(36).slice(2, 8);
+        cfg.color = OVERLAY_COLORS[state.nextIndicatorColorIdx % OVERLAY_COLORS.length];
+        state.nextIndicatorColorIdx++;
+        state.indicators.overlays.push(cfg);
+        renderAll();
+        toast((cfg.type.toUpperCase()) + ' added');
+      }
+
+      /* =====================================================================
+         DROPDOWN OPEN/CLOSE WIRING
+      ===================================================================== */
+      function closeAllDropdowns() {
+        $$('.dropdown').forEach(d => d.classList.remove('open'));
+      }
+      function toggleDropdown(dd, anchorBtn) {
+        const willOpen = !dd.classList.contains('open');
+        closeAllDropdowns();
+        if (willOpen) {
+          const r = anchorBtn.getBoundingClientRect();
+          dd.style.left = r.left + 'px';
+          dd.classList.add('open');
+        }
+      }
+      $('#symbolBtn').onclick = (e) => { e.stopPropagation(); renderSymbolList(''); toggleDropdown(symbolDD, e.currentTarget); $('#symbol-search').value = ''; setTimeout(() => $('#symbol-search').focus(), 10); };
+      $('#typeBtn').onclick = (e) => { e.stopPropagation(); toggleDropdown(typeDD, e.currentTarget); };
+      $('#indBtn').onclick = (e) => { e.stopPropagation(); buildIndicatorMenu(); toggleDropdown(indDD, e.currentTarget); };
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.dropdown')) closeAllDropdowns();
+      });
+
+      /* =====================================================================
+         TOP-RIGHT ICON BUTTONS
+      ===================================================================== */
+      $('#themeBtn').onclick = () => {
+        state.theme = state.theme === 'dark' ? 'light' : 'dark';
+        document.body.classList.toggle('light', state.theme === 'light');
+        renderAll();
+      };
+      $('#resetBtn').onclick = () => {
+        state.offsetFromEnd = 0; state.visibleCount = 110; toast('View reset'); renderAll();
+      };
+      $('#screenshotBtn').onclick = () => {
+        try {
+          const link = document.createElement('a');
+          link.download = state.symbol + '_' + state.tf + '_chart.png';
+          link.href = mainPaneDOM.mainCanvas.toDataURL('image/png');
+          link.click();
+          toast('Chart image saved');
+        } catch (err) { toast('Could not export image'); }
+      };
+
+      /* =====================================================================
+         RESIZE
+      ===================================================================== */
+      const ro = new ResizeObserver(() => { layoutPanes(); renderAll(); });
+      ro.observe(panesEl);
+      ro.observe($('#time-axis-wrap'));
+      window.addEventListener('resize', () => { layoutPanes(); renderAll(); });
+
+      /* =====================================================================
+         INIT
+      ===================================================================== */
+      function init() {
+        loadData();
+        updateSymbolPrice();
+        layoutPanes();
+        renderAll();
+        setTool('cursor');
+        // periodic gentle live-update simulation of last candle (purely cosmetic, local only)
+        setInterval(() => {
+          if (!state.data.length) return;
+          const last = state.data[state.data.length - 1];
+          const si = currentSymbolInfo();
+          const jitter = (Math.random() - 0.5) * si.vol * 0.15 * last.c;
+          last.c = Math.max(0.0001, last.c + jitter);
+          last.h = Math.max(last.h, last.c);
+          last.l = Math.min(last.l, last.c);
+          updateSymbolPrice();
+          renderAll();
+        }, 2500);
+      }
+      init();
+
+    })();
+  </script>
+</body>
+
+</html>
